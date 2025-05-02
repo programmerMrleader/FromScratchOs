@@ -9,9 +9,15 @@ So if you want to help me send email to me
 
 ```
 
-#Run
+# Run
 ```
-cat sector_1.bin sector_2.bin > full_disk.img
-qemu-system-i386 -fda full_disk.img
+make 
+make run
 
 ```
+
+# Clean
+
+```
+make clean
+``` 
