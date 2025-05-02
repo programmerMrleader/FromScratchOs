@@ -13,6 +13,10 @@ stack_top:
 section .text
 global _start
 extern kernel_main
+global load_idt
+load_idt:
+        lidt [esp +4] ; load the IDT pointer based on the stack
+        ret ; return to the c code 
 
 _start:
     ; Set up stack
