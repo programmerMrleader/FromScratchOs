@@ -1,20 +1,20 @@
+
+
+
+bits 32
 section .multiboot
 align 4
     dd 0x1BADB002          ; Magic number
     dd 0x00000003          ; Flags (align modules + memory map)
-    dd -(0x1BADB002 + 0x03) ; Checksum
+    dd -(0x1BADB002 + 0x00000003) ; Checksum
 
-section .bss
-align 16
-stack_bottom:
-    resb 16384             ; 16KB stack
-stack_top:
+
 
 section .text
-global _start
 extern kernel_main
 extern divide_error_handler
 extern keyboard_handler
+global _start
 _start:
     ; Set up stack
     mov esp, stack_top
@@ -33,7 +33,7 @@ global isr0; interrupt service
 isr0:
 	cli
 	push byte 0
-	push byte 33 
+	push byte 0 
 	jmp isr_common
 global irq1
 irq1:
@@ -83,3 +83,8 @@ irq_common:
 	add esp,8
 	sti
 	iret 
+section .bss
+align 16
+stack_bottom:
+    resb 16384             ; 16KB stack
+stack_top:

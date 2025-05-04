@@ -1,3 +1,5 @@
+
+
 #include<stdint.h>
 #include "port.h"
 #define VGA_BUFFER 0xB8000
@@ -46,12 +48,12 @@ void divide_error_handler(){
 	print_char("Divide error");
 	__asm__ volatile("cli;hlt");
 }
-#define ESC 27 // Define ESC if not already available
+#define ESC 27 
 static const char scancode_map[128] = { // Only map relevant key presses (codes < 0x80)
       0,ESC, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', // 0x00 - 0x0E
     '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',      // 0x0F - 0x1C (Enter)
        0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',          // 0x1D - 0x29 (Left Ctrl)
-       0, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',    0,        // 0x2A - 0x36 (Left Shift, Backslash, Z.. / , Right Shift)
+       0, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',    0,0x3A,        // 0x2A - 0x36 (Left Shift, Backslash, Z.. / , Right Shift)
        '*', // 0x37 (Keypad *)
        0,  // 0x38 (Left Alt)
      ' ',  // 0x39 (Space)
@@ -67,6 +69,14 @@ static const char scancode_map[128] = { // Only map relevant key presses (codes 
     // Add more mappings up to 0x7F if needed
 };
 
+void clear_screen(){
+	char *video_memory = (char*)VGA_BUFFER;
+	const int SCREEN_SIZE = 80*25*2;
+	for(int i =0;i<SCREEN_SIZE;i++){
+		video_memory[i*2] = ' ';
+		video_memory[i*2+1] = 0x0F;
+	}
+}
 void print_keycode(char c) {
     static int cursor_pos = 0; // Tracks screen position (char offset)
     char *video_memory = (char *)0xB8000; // VGA text mode memory
@@ -87,6 +97,10 @@ void print_keycode(char c) {
              cursor_pos = 0;
              // Add scrolling logic here if needed later
         }
+        if(c == ESC){
+        	clear_screen();
+        	cursor_pos= 0;
+        }
         video_memory[cursor_pos * 2] = c;
         video_memory[cursor_pos * 2 + 1] = 0x0F; // White on black attribute
         cursor_pos++;
@@ -95,10 +109,8 @@ void print_keycode(char c) {
     // Wrap cursor if it went off screen from newline or typing
     if (cursor_pos >= SCREEN_SIZE) {
          cursor_pos = 0; // Simple wrap-around
-         // Add scrolling logic here if needed later
+     
     }
-
-    // Update hardware cursor (optional, requires more port I/O)
 }
 void keyboard_handler(){
 	static uint8_t extended = 0;
@@ -167,11 +179,12 @@ void keyboard_init(){
 	outb(KEYBOARD_STATUS_PORT,0x60);
 
 	while(inb(KEYBOARD_STATUS_PORT) & 0x02);
-	outb(KEYBOARD_DATA_PORT,0x45);
+	outb(KEYBOARD_DATA_PORT,0x41);
 
 	while(inb(KEYBOARD_STATUS_PORT) & 0x02);
 	outb(KEYBOARD_STATUS_PORT,0xAE);
-	
+
+		
 }
 void print_char(char *c){
 	char *video_memory = (char*)VGA_BUFFER;
@@ -186,7 +199,7 @@ void kernel_main() {
 	pic_remap();
 	idt_init();
 	keyboard_init();
-
+	sti();
 	print_char("Key pressed");
     while(1);
 }
