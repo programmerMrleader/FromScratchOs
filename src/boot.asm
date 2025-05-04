@@ -13,11 +13,8 @@ stack_top:
 section .text
 global _start
 extern kernel_main
-global load_idt
-load_idt:
-        lidt [esp +4] ; load the IDT pointer based on the stack
-        ret ; return to the c code 
-
+extern divide_error_handler
+extern keyboard_handler
 _start:
     ; Set up stack
     mov esp, stack_top
@@ -32,3 +29,57 @@ _start:
 .hang:
     hlt
     jmp .hang
+global isr0; interrupt service 
+isr0:
+	cli
+	push byte 0
+	push byte 33 
+	jmp isr_common
+global irq1
+irq1:
+	cli 
+	push byte 0
+	push byte 33
+	jmp irq_common
+isr_common:
+	pusha 
+	mov ax,ds
+	push eax
+	mov ax,0x10
+	mov ds,ax
+	mov es,ax
+	mov fs,ax
+	mov gs,ax
+
+	call divide_error_handler
+
+	pop eax
+	mov ds,ax
+	mov es,ax
+	mov fs,ax
+	mov gs,ax
+	popa 
+	add esp,8
+	sti
+	iret
+irq_common:
+	pusha
+	mov ax,ds
+	push eax
+	mov ax,0x10
+	mov ds,ax
+	mov es,ax
+	mov fs,ax
+	mov gs,ax
+
+	call keyboard_handler
+
+	pop eax 
+	mov ds,ax
+	mov es,ax
+	mov fs,ax
+	mov gs,ax
+	popa 
+	add esp,8
+	sti
+	iret 

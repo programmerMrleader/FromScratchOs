@@ -1,8 +1,9 @@
 CC = i686-elf-gcc
 ASM = nasm
-CFLAGS = -ffreestanding -nostdlib -Wall -Wextra -masm=intel
+CFLAGS = -ffreestanding -nostdlib -Wall -Wextra -m32
 LDFLAGS = -Wl,--oformat=elf32-i386 -T linker.ld -nostdlib
-
+SRC=src
+BUILD=build
 all: kernel.iso
 
 kernel.elf: boot.o kernel.o
